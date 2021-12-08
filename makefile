@@ -1,5 +1,5 @@
 main : newton.cpp
-	g++ -I /usr/include/eigen3/  -o newtonr newton.cpp -lraylib
+	g++ -o newtonr newton.cpp -lraylib
 	./newtonr
 
 mainwin : newton.cpp
