@@ -7,7 +7,7 @@
 #define ComplexNo std::complex<double> 
 #define SCREENW (double)800.0
 #define SCREENH (double)600.0
-#define DENSITY 0.1
+#define DENSITY 0.4
 #define STEPSIZE 1
 #define BUFF (float)1.5
 bool is_processing = false;
@@ -81,7 +81,12 @@ void GiveColorsToRoots(int chunk=0,int max=0,int chunksize=0){
                 else if(points[i].index == -1 & points[j].index == -1){
                     points[i].index = IndexCount;
                     points[j].index = IndexCount;
-                    IndexCount++;
+                    if(IndexCount < 5){
+                        IndexCount++;
+                    }else{
+                        IndexCount = 0;
+                    }
+                    
                 }
             }
         }
@@ -128,8 +133,9 @@ int main(){
 
         
         if(IsKeyPressed(KEY_BACKSPACE) && !is_processing){
-            for(int i=1; i<50; i++){
-                std::thread colorize0(GiveColorsToRoots,i,points.size(),points.size()/50);
+            int thread_groups = 10;
+            for(int i=1; i<=thread_groups; i++){
+                std::thread colorize0(GiveColorsToRoots,i,points.size(),points.size()/thread_groups);
                 colorize0.detach();
                 std::cout << "Thread " << i << " started" << std::endl;
             }
