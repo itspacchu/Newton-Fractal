@@ -2,8 +2,16 @@
 #include<raylib.h>
 #include<vector>
 #include<complex>
+#include<thread>
 
 #define ComplexNo std::complex<double> 
+#define SCREENW 800
+#define SCREENH 600
+#define DENSITY 0.23
+#define STEPSIZE 1
+
+bool is_processing = false;
+int IndexCount = 0;
 
 typedef struct RootObj
 {
@@ -21,10 +29,6 @@ ComplexNo cmp(double a, double b)
     return ComplexNo(a, b);
 }
 
-#define SCREENW 800
-#define SCREENH 600
-#define DENSITY 0.2
-#define STEPSIZE 1
 std::vector<RootObj> points;
 
 Color colors[5] = {(Color){110,60,188,255}, (Color){114,103,203,255}, (Color){152,186,231,255}, (Color){152,186,231,255}, (Color){184,228,240,255}};
@@ -57,9 +61,13 @@ float GetDistance(ComplexNo a, ComplexNo b)
     return sqrt(pow(a.real()-b.real(),2) + pow(a.imag()-b.imag(),2));
 }
 
-void GiveColorsToRoots(){
-    int IndexCount = 0;
-    for(int i = 0; i < points.size(); i++){
+void GiveColorsToRoots(int chunk=0,int max=0,int chunksize=0){
+    is_processing = true;
+
+    int lower = chunk*chunksize;
+    int upper = (chunk+1)*chunksize;
+
+    for(int i = lower; i < upper; i++){
         for(int j=0;j<points.size(); j++){
             if(GetDistance(points[i].num, points[j].num) < 1.0){
                 if(points[i].index == -1 && points[j].index != -1){
@@ -69,7 +77,6 @@ void GiveColorsToRoots(){
                     points[j].index = points[i].index;
                 }
                 else if(points[i].index == -1 & points[j].index == -1){
-                    std::cout << "INDEX : " << IndexCount << std::endl;
                     points[i].index = IndexCount;
                     points[j].index = IndexCount;
                     IndexCount++;
@@ -77,11 +84,12 @@ void GiveColorsToRoots(){
             }
         }
     }
-    for(int i = 0; i < points.size(); i++){
+    for(int i = lower; i < upper; i++){
         points[i].color = colors[points[i].index];
+        points[i].num = points[i].original;
     }
+    is_processing = false;
 }
-
 
 float Remap(float val, float oldMin, float oldMax, float newMin, float newMax)
 {
@@ -113,12 +121,13 @@ int main(){
             DrawRectangle(drawScale * points[i].num.real() + SCREENW/2, drawScale * points[i].num.imag() + SCREENH/2, 1/DENSITY, 1/DENSITY,col);
         }
         
-        if(IsKeyDown(KEY_BACKSPACE)){
-            GiveColorsToRoots();
-            for(int i=0; i<points.size(); i++)
-            {
-                points[i].num = points[i].original;
+        if(IsKeyPressed(KEY_BACKSPACE) && !is_processing){
+            for(int i=1; i<50; i++){
+                std::thread colorize0(GiveColorsToRoots,i,points.size(),points.size()/50);
+                colorize0.detach();
+                std::cout << "Thread " << i << " started" << std::endl;
             }
+
         }
         if(IsKeyDown(KEY_SPACE)){
             for(int i=0; i<points.size(); i++)
@@ -143,7 +152,7 @@ int main(){
         }else if(IsKeyDown(KEY_DOWN)){
             drawScale -= 0.1*boost;
         }
-        DrawText(TextFormat("Iteration : %d Draw Scale : %f",ITER,drawScale), 20, 20, 20, WHITE);
+        DrawText(TextFormat("Iteration : %d :: Draw Scale : %f :: isProcessing : %d ",ITER,drawScale,is_processing), 20, 20, 20, WHITE);
         EndDrawing();
     }
 }
