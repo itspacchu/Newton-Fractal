@@ -5,11 +5,11 @@
 #include<thread>
 
 #define ComplexNo std::complex<double> 
-#define SCREENW 800
-#define SCREENH 600
-#define DENSITY 0.23
+#define SCREENW (double)800.0
+#define SCREENH (double)600.0
+#define DENSITY 0.1
 #define STEPSIZE 1
-
+#define BUFF (float)1.5
 bool is_processing = false;
 int IndexCount = 0;
 
@@ -41,14 +41,17 @@ ComplexNo OffsetOrigin(ComplexNo num)
 
 ComplexNo fxnZ(ComplexNo z)
 {
+    // a Z^2 + b Z + c
     //return 122.45*pow(z,5) + 432.12*pow(z,4) + cmp(123.0,453.2)*pow(z,3) - 120.12*pow(z,2) - 152.12*z - 452.12;
-    return pow(z,5) + pow(z,2) - z + cmp(1,0);
+    // return pow(z,5) + pow(z,2) - z + cmp(1,0);
+    return (pow(z,5) + pow(z,4) + pow(z,3 )+ pow(z,2) + z + cmp(11200,0));
 }
 
 ComplexNo dfxnZ(ComplexNo z)
 {
     //return  122.45*5.0*pow(z,4) + 432.12*4.0*pow(z,3) + cmp(123.0,453.2)*3.0*pow(z,2) - 120.12*2.0*z - 152.12;
-    return 5.0*pow(z,4) + 2.0*z - cmp(1,0);
+    //return 5.0*pow(z,4) + 2.0*z - cmp(1,0);
+    return (5.0*pow(z,4) + 4.0*pow(z,3) + 3.0*pow(z,2) + 2.0*z + cmp(11200,0));
 }
 
 ComplexNo newton(ComplexNo z,double stepSize = STEPSIZE)
@@ -63,12 +66,11 @@ float GetDistance(ComplexNo a, ComplexNo b)
 
 void GiveColorsToRoots(int chunk=0,int max=0,int chunksize=0){
     is_processing = true;
-
     int lower = chunk*chunksize;
     int upper = (chunk+1)*chunksize;
 
     for(int i = lower; i < upper; i++){
-        for(int j=0;j<points.size(); j++){
+        for(int j=0;j<max; j++){
             if(GetDistance(points[i].num, points[j].num) < 1.0){
                 if(points[i].index == -1 && points[j].index != -1){
                     points[i].index = points[j].index;
@@ -100,7 +102,7 @@ float Remap(float val, float oldMin, float oldMax, float newMin, float newMax)
 
 int main(){
     float drawScale = 1.0;
-    ComplexNo offsetfrom;
+    Vector2 offsetfrom;
     int ITER = 0;
     for(int j=-SCREENH/(2.0); j <SCREENH/(2.0); j+=1/DENSITY)
     {
@@ -118,8 +120,12 @@ int main(){
         ClearBackground({25,25,25,255});
         for(int i=0; i<points.size(); i++){
             Color col = points[i].color;
-            DrawRectangle(drawScale * points[i].num.real() + SCREENW/2, drawScale * points[i].num.imag() + SCREENH/2, 1/DENSITY, 1/DENSITY,col);
+            DrawRectangle(drawScale * points[i].num.real() + SCREENW/2.0 + offsetfrom.x, drawScale * points[i].num.imag() + SCREENH/2.0 + offsetfrom.y, BUFF * (drawScale/DENSITY), BUFF * (drawScale/DENSITY),col);
         }
+        DrawLine(SCREENW/2.0 + offsetfrom.x , 0 + offsetfrom.y, SCREENW/2.0 + offsetfrom.x, SCREENH + offsetfrom.y , (Color){255,125,125,255});
+        DrawLine(0 + offsetfrom.x, SCREENH/2.0 + offsetfrom.y, SCREENW + offsetfrom.x, SCREENH/2.0 + offsetfrom.y, (Color){255,125,125,255});
+
+
         
         if(IsKeyPressed(KEY_BACKSPACE) && !is_processing){
             for(int i=1; i<50; i++){
@@ -148,10 +154,19 @@ int main(){
             boost = 1.0f;
         }
         if(IsKeyDown(KEY_UP)){
-            drawScale += 0.1*boost;
+            offsetfrom.y += 0.1*boost;
         }else if(IsKeyDown(KEY_DOWN)){
+            offsetfrom.y -= 0.1*boost;
+        }else if(IsKeyDown(KEY_RIGHT)){
+            offsetfrom.x += 0.1*boost;
+        }else if(IsKeyDown(KEY_LEFT)){
+            offsetfrom.x -= 0.1*boost;
+        }else if(IsKeyDown(KEY_W)){
+            drawScale += 0.1*boost;
+        }else if(IsKeyDown(KEY_S)){
             drawScale -= 0.1*boost;
         }
+
         DrawText(TextFormat("Iteration : %d :: Draw Scale : %f :: isProcessing : %d ",ITER,drawScale,is_processing), 20, 20, 20, WHITE);
         EndDrawing();
     }
