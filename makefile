@@ -1,4 +1,5 @@
 main : newton.cpp
-	g++ -I /usr/include/eigen3/  -o newtonr newton.cpp -lraylib -lpthread
-	./newtonr
+	g++ -o ./build/newton newton.cpp -lraylib -lpthread
+	./build/newton
+	rm ./build/newton
 
