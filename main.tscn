@@ -1,0 +1,272 @@
+[gd_scene load_steps=4 format=2]
+
+[ext_resource path="res://valuechanger.gd" type="Script" id=1]
+
+[sub_resource type="Shader" id=1]
+code = "shader_type canvas_item;
+
+uniform vec2 root1;
+uniform vec2 root2;
+uniform vec2 root3;
+
+uniform vec3 color1;
+uniform vec3 color2;
+uniform vec3 color3;
+
+uniform vec2 coordMove = vec2(0,0);
+uniform float zoom = 1;
+
+const float PI = 3.1415926538;
+
+float remap( float minval, float maxval, float curval )
+{
+    return ( curval - minval ) / ( maxval - minval );
+} 
+
+
+float m_sin(float t){
+    return sin(t)*0.1 + 1.0;
+}
+// https://www.shadertoy.com/view/ssBGWc
+vec2 cmul(vec2 a, vec2 b) {
+    return vec2(a.x*b.x-a.y*b.y, a.x*b.y+a.y*b.x);
+}
+vec2 cdiv(vec2 a, vec2 b) { 
+    return vec2(a.x*b.x+a.y*b.y, -a.x*b.y+a.y*b.x) / (b.x*b.x+b.y*b.y);
+}
+
+vec2 fn(vec2 z) { // f(z) = z^ - 1
+    vec2 a = root1 + m_sin(TIME*0.1);
+    vec2 b = root2 + m_sin(TIME*0.2);
+    vec2 c = root3 + + m_sin(TIME*0.12);
+    return cmul(z,cmul(z,z)) - cmul(cmul(z,z),(a+b+c)) - cmul(z,cmul(c,(a+b))) - cmul(a,cmul(b,c));
+}
+vec2 dfn(vec2 z) {
+    vec2 a = root1 + m_sin(TIME*0.1);
+    vec2 b = root2 + m_sin(TIME*0.2);
+    vec2 c = root3 + + m_sin(TIME*0.12);
+    return 3.*cmul(z,z) - 2.*cmul(z,(a+b+c)) - cmul(c,(a+b));
+}
+
+void fragment(){
+	
+    vec2 uv = (SCREEN_UV + coordMove)/zoom;
+    highp vec2 z = (uv + coordMove);
+    highp vec2 zp = z;
+    float i = 0.0;
+    highp float thresh = 0.00001;
+    for(i = 0.0; i < 50.0; i++) {
+        z -= cdiv(fn(z), dfn(z)); // newton fractal
+        if(length(z - zp) < thresh) break;
+        zp = z;
+    }
+    float theta = atan(z.y, z.x);
+    float rot = mod(theta/(2.0*PI),1);
+
+    vec3 color;
+    if(rot < 0.3){
+        color = color1;
+    }
+    else if(rot < 0.5){
+        color = color2;
+    }
+    else{
+        color = color3;
+    }
+	COLOR = vec4(color*(log(float(i)/4.0)*0.5+0.1),1.0);
+}"
+
+[sub_resource type="ShaderMaterial" id=2]
+shader = SubResource( 1 )
+shader_param/root1 = Vector2( 3, 3 )
+shader_param/root2 = Vector2( 2.1, -0.62 )
+shader_param/root3 = Vector2( 2.1, 0.62 )
+shader_param/color1 = Vector3( 0.148, 0.162, 0.198 )
+shader_param/color2 = Vector3( 0.278, 0.273, 0.058 )
+shader_param/color3 = Vector3( 0.114, 0.206, 0 )
+shader_param/coordMove = Vector2( 0, 0 )
+shader_param/zoom = 1.0
+
+[node name="Control" type="Control"]
+anchor_right = 1.0
+anchor_bottom = 1.0
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
+[node name="ColorRect" type="ColorRect" parent="."]
+material = SubResource( 2 )
+anchor_right = 1.0
+anchor_bottom = 1.0
+script = ExtResource( 1 )
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
+[node name="local" type="Control" parent="ColorRect"]
+anchor_bottom = 1.0
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
+[node name="root1x" type="HSlider" parent="ColorRect/local"]
+anchor_top = 1.0
+anchor_bottom = 1.0
+margin_left = 23.0
+margin_top = -317.0
+margin_right = 223.0
+margin_bottom = -284.0
+rect_pivot_offset = Vector2( 47, 17 )
+min_value = -100.0
+step = 0.001
+value = 3.0
+allow_greater = true
+allow_lesser = true
+scrollable = false
+tick_count = 10
+ticks_on_borders = true
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
+[node name="root1y" type="HSlider" parent="ColorRect/local"]
+anchor_top = 1.0
+anchor_bottom = 1.0
+margin_left = 24.0
+margin_top = -285.0
+margin_right = 225.0
+margin_bottom = -252.0
+rect_pivot_offset = Vector2( 47, 17 )
+min_value = -100.0
+step = 0.001
+value = 3.0
+allow_greater = true
+allow_lesser = true
+scrollable = false
+tick_count = 10
+ticks_on_borders = true
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
+[node name="root2x" type="HSlider" parent="ColorRect/local"]
+anchor_top = 1.0
+anchor_bottom = 1.0
+margin_left = 24.0
+margin_top = -225.0
+margin_right = 224.0
+margin_bottom = -192.0
+rect_pivot_offset = Vector2( 124, 33 )
+min_value = -100.0
+step = 0.001
+value = 2.1
+allow_greater = true
+allow_lesser = true
+scrollable = false
+tick_count = 10
+ticks_on_borders = true
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
+[node name="root2y" type="HSlider" parent="ColorRect/local"]
+anchor_top = 1.0
+anchor_bottom = 1.0
+margin_left = 24.0
+margin_top = -193.0
+margin_right = 224.0
+margin_bottom = -160.0
+rect_pivot_offset = Vector2( 124, 33 )
+min_value = -100.0
+step = 0.001
+value = -0.62
+allow_greater = true
+allow_lesser = true
+scrollable = false
+tick_count = 10
+ticks_on_borders = true
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
+[node name="root3x" type="HSlider" parent="ColorRect/local"]
+anchor_top = 1.0
+anchor_bottom = 1.0
+margin_left = 26.0
+margin_top = -126.0
+margin_right = 226.0
+margin_bottom = -93.0
+rect_pivot_offset = Vector2( 124, 33 )
+min_value = -100.0
+step = 0.001
+value = 2.1
+allow_greater = true
+allow_lesser = true
+scrollable = false
+tick_count = 10
+ticks_on_borders = true
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
+[node name="root3y" type="HSlider" parent="ColorRect/local"]
+anchor_top = 1.0
+anchor_bottom = 1.0
+margin_left = 25.0
+margin_top = -93.0
+margin_right = 225.0
+margin_bottom = -60.0
+rect_pivot_offset = Vector2( 124, 33 )
+min_value = -100.0
+step = 0.001
+value = -0.62
+allow_greater = true
+allow_lesser = true
+scrollable = false
+tick_count = 10
+ticks_on_borders = true
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
+[node name="C1" type="ColorPickerButton" parent="ColorRect/local"]
+anchor_top = 1.0
+anchor_bottom = 1.0
+margin_left = 12.0
+margin_top = -46.0
+margin_right = 44.0
+margin_bottom = -14.0
+flat = true
+color = Color( 1, 0.27451, 0.27451, 1 )
+edit_alpha = false
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
+[node name="C2" type="ColorPickerButton" parent="ColorRect/local"]
+anchor_top = 1.0
+anchor_bottom = 1.0
+margin_left = 49.0
+margin_top = -46.0
+margin_right = 81.0
+margin_bottom = -14.0
+flat = true
+color = Color( 1, 0.7, 0.805, 1 )
+edit_alpha = false
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
+[node name="C3" type="ColorPickerButton" parent="ColorRect/local"]
+anchor_top = 1.0
+anchor_bottom = 1.0
+margin_left = 84.0
+margin_top = -46.0
+margin_right = 116.0
+margin_bottom = -14.0
+flat = true
+color = Color( 0.670588, 0.345098, 1, 1 )
+edit_alpha = false
+__meta__ = {
+"_edit_use_anchors_": false
+}
