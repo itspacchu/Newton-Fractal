@@ -32,24 +32,30 @@ func _ready() -> void:
 	zoom = material.get_shader_param("zoom")
 
 func _process(delta: float) -> void:
-	material.set_shader_param("root1",Vector2(root1x.value/10,root1y.value/10))
-	material.set_shader_param("root2",Vector2(root2x.value/10,root2y.value/10))
-	material.set_shader_param("root3",Vector2(root3x.value/10,root3y.value/10))
+	var scalar = $local/VSlider.value
+	material.set_shader_param("root1",Vector2(scalar + root1x.value/10,scalar + root1y.value/10))
+	material.set_shader_param("root2",Vector2(scalar+root2x.value/10,scalar+root2y.value/10))
+	material.set_shader_param("root3",Vector2(scalar+root3x.value/10,scalar+root3y.value/10))
 	material.set_shader_param("color1",Vector3(C1.color.r,C1.color.g,C1.color.b))
 	material.set_shader_param("color2",Vector3(C2.color.r,C2.color.g,C2.color.b))
 	material.set_shader_param("color3",Vector3(C3.color.r,C3.color.g,C3.color.b))
 	var hori = Input.get_action_strength("ui_right") - Input.get_action_strength("ui_left")
 	var verti = Input.get_action_strength("ui_up") - Input.get_action_strength("ui_down")
 	var zoomin = Input.get_action_strength("ui_page_up") - Input.get_action_strength("ui_page_down")
+	var scalarize = 1;
+	if(Input.get_action_strength("scalar")):
+		scalarize = lerp(scalarize,0.1,delta)
 	if(abs(zoomin) > 0):
-		zoom += zoomin*delta
+		if(zoom <= 0.1):
+			zoom += abs(zoomin)*delta
+		else:
+			zoom += zoomin*delta
 		material.set_shader_param("zoom",zoom)
 		print(zoom)
 	if(abs(hori + verti) > 0.001):
 		MoveCoord += delta*Vector2(hori,verti)
 		material.set_shader_param("coordMove",MoveCoord)
-	
-	
+
 	
 	
 	
